@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>指南针 Demo</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; margin-top: 50px; }
+    #arrow { font-size: 100px; transition: transform 0.5s ease; }
+  </style>
+</head>
+<body>
+  <h1>指南针 Demo</h1>
+  <div id="arrow">🧭</div>
+  <p id="angle">方向：--°</p>
+  <button onclick="enableCompass()">启用指南针</button>
+
+  <script>
+    function enableCompass() {
+      if (
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function'
+      ) {
+        // iOS
+        DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', onOrientation);
+            } else {
+              alert("未授权方向传感器权限");
+            }
+          });
+      } else {
+        // Android
+        window.addEventListener('deviceorientation', onOrientation);
+      }
+    }
+
+    function onOrientation(event) {
+      const alpha = event.alpha; // 0~360度，0代表正北
+      if (alpha !== null) {
+        document.getElementById("angle").textContent = `方向：${Math.round(alpha)}°`;
+        document.getElementById("arrow").style.transform = `rotate(${-alpha}deg)`;
+      } else {
+        document.getElementById("angle").textContent = "方向：不支持或无效";
+      }
+    }
+  </script>
+</body>
+</html>
