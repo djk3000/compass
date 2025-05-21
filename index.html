@@ -2,16 +2,36 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>指南针 Demo</title>
+  <title>手机指南针</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { text-align: center; font-family: sans-serif; margin-top: 50px; }
-    #arrow { font-size: 100px; transition: transform 0.5s ease; }
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 50px;
+    }
+    #arrow {
+      font-size: 100px;
+      display: inline-block;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease-out;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    #angle {
+      margin-top: 20px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h1>指南针 Demo</h1>
+
+  <h1>手机指南针</h1>
   <div id="arrow">🧭</div>
-  <p id="angle">方向：--°</p>
+  <div id="angle">方向角度：--</div>
   <button onclick="enableCompass()">启用指南针</button>
 
   <script>
@@ -20,30 +40,38 @@
         typeof DeviceOrientationEvent !== 'undefined' &&
         typeof DeviceOrientationEvent.requestPermission === 'function'
       ) {
-        // iOS
-        DeviceOrientationEvent.requestPermission()
-          .then(response => {
-            if (response === 'granted') {
-              window.addEventListener('deviceorientation', onOrientation);
-            } else {
-              alert("未授权方向传感器权限");
-            }
-          });
+        // iOS 13+ 需要用户手动授权
+        DeviceOrientationEvent.requestPermission().then(response => {
+          if (response === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+          } else {
+            alert('未授权方向权限');
+          }
+        }).catch(console.error);
       } else {
-        // Android
-        window.addEventListener('deviceorientation', onOrientation);
+        // Android 直接使用
+        window.addEventListener('deviceorientation', handleOrientation, true);
       }
     }
 
-    function onOrientation(event) {
-      const alpha = event.alpha; // 0~360度，0代表正北
-      if (alpha !== null) {
-        document.getElementById("angle").textContent = `方向：${Math.round(alpha)}°`;
-        document.getElementById("arrow").style.transform = `rotate(${-alpha}deg)`;
-      } else {
-        document.getElementById("angle").textContent = "方向：不支持或无效";
+    function handleOrientation(event) {
+      let heading;
+
+      if (event.webkitCompassHeading !== undefined) {
+        // iOS 使用 webkitCompassHeading，顺时针，0 是北
+        heading = event.webkitCompassHeading;
+      } else if (event.alpha !== null) {
+        // Android 使用 alpha，逆时针，所以要转换
+        heading = 360 - event.alpha;
+      }
+
+      if (heading !== undefined) {
+        heading = heading % 360;
+        document.getElementById('angle').textContent = `方向角度：${Math.round(heading)}°`;
+        document.getElementById('arrow').style.transform = `rotate(${-heading}deg)`;
       }
     }
   </script>
+
 </body>
 </html>
